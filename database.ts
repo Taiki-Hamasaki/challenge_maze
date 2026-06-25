@@ -43,6 +43,36 @@ namespace Database {
       resposta: 1,
       time: 15
     }),
+    criarPergunta({
+        quiz: "Qual operador retorna o endereço de uma variável em C?",
+        alternativas: [
+            "&",
+            "*",
+            "%"
+        ],
+        resposta: 0,
+        time: 15
+    }),
+    criarPergunta({
+        quiz: "O que significa FIFO?",
+        alternativas: [
+            "First In, First Out",
+            "First In, Final Out",
+            "Fast Input, Fast Output"
+        ],
+        resposta: 0,
+        time: 15
+    }),
+    criarPergunta({
+        quiz: "Qual palavra-chave em C define um valor imutável?",
+        alternativas: [
+            "final",
+            "static",
+            "const"
+        ],
+        resposta: 2,
+        time: 15
+    })
   ];
 
   // Perguntas sobre linguagem C

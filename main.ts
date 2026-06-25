@@ -1,14 +1,86 @@
 namespace SpriteKind {
     export const GameInteractions = SpriteKind.create()
+    export const PowerUps = SpriteKind.create()
 }
+sprites.onOverlap(SpriteKind.Player, SpriteKind.PowerUps, function (sprite, otherSprite) {
+    if (otherSprite.image == pills[0]) {
+        let time = info.countdown(); 
+        info.startCountdown(time + 10)
+    } else if (otherSprite.image == pills[1]) {
+        sprite.setVelocity(300, 300)
+        pause(5000)
+        sprite.setVelocity(200, 200)
+    } else if (otherSprite.image == pills[2]) {
+        sprite.setImage(sprite.image.rotated(180))
+        controller.moveSprite(sprite, -200, -200)
+        pause(10000)
+        controller.moveSprite(sprite, 200, 200)
+    }
+    sprites.destroy(otherSprite, effects.spray);
+})
+// tiles.placeOnTile(powerUp, )
+function initPills () {
+    let x : number[] = [1, 8, 11, 5, 15, 15, 24, 28, 5];
+    let y : number[] = [ 17, 24, 1, 9, 1, 34, 1, 24, 33]
+    for(let i = 0;i<9;i++) {
+        let powerUp : any;
+        if(i < 3) powerUp = sprites.create(pills[0], SpriteKind.PowerUps)
+        else if(i>=3 && i<=5) powerUp = sprites.create(pills[1], SpriteKind.PowerUps);
+        else powerUp = sprites.create(pills[2], SpriteKind.PowerUps);
+        tiles.placeOnTile(powerUp, tiles.getTileLocation(x[i], y[i]));
+    }
+}
+
 info.onCountdownEnd(function () {
     game.setGameOverMessage(false, "Seu tempo acabou...\nDerrota")
     game.gameOver(false)
 })
-let frame = false
+sprites.onOverlap(SpriteKind.Player, SpriteKind.GameInteractions, function (sprite, otherSprite) {
+    challenges(sprite, otherSprite)
+})
+// Quiz dos questionadores
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
+    remainingTime = info.countdown()
+    info.stopCountdown()
+    let perguntas: Database.Pergunta[];
+let rand: number;
+lastX = jogador.x
+    lastY = jogador.y
+    controller.moveSprite(sprite, 0, 0)
+    sprite.setVelocity(0, 0)
+    if (otherSprite == stalkerEnemy) {
+        perguntas = Database.perguntasStalker;
+rand = Math.floor(Math.random() * perguntas.length)
+        story.spriteSayText(otherSprite, perguntas[rand].quiz)
+        let alternatives = perguntas[rand].alternativas;
+story.showPlayerChoices(alternatives[0], alternatives[1], alternatives[2])
+        resposta = story.getLastAnswer()
+        if (resposta == perguntas[rand].alternativas[perguntas[rand].resposta]) {
+            story.spriteSayText(otherSprite, "Droga, você colou, certeza...")
+            controller.moveSprite(jogador, 200, 200)
+            otherSprite.setPosition(-20, -20)
+            pause(5000)
+            otherSprite.setPosition(lastX, lastY)
+        } else {
+            story.spriteSayText(otherSprite, "HAHAHA, você errou! Melhor voltar para o início do labirinto!")
+            controller.moveSprite(jogador, 200, 200)
+            init(32, 32, 2, 2);
+        }
+        info.startCountdown(remainingTime)
+    }
+})
+let lastY = 0
+let lastX = 0
+let remainingTime = 0
+let powerUp: Sprite = null
+let pills: Image[] = []
+let resposta = ""
+let stalkerEnemy: Sprite = null
+let jogador: Sprite = null
+let stalkingLoop = false
 // 0=baixo, 1=cima, 2=direita, 3=esquerda
 let direcao = 0
-let stalkingLoop = false
+let frame = false
 // 0,3 - parado
 // 1,2,4,5 - andando
 let playerSprites = [
@@ -194,8 +266,8 @@ img`
     `
 ]
 let tileSize = 16
-let jogador = sprites.create(playerSprites[0], SpriteKind.Player)
-let pills = [img`
+jogador = sprites.create(playerSprites[0], SpriteKind.Player)
+pills = [img`
     . . 7 7 7 7 7 7 . . . . . . . . 
     . . 7 . . f f f f f . . . . . . 
     . . 7 . f . . . . . f . . . . . 
@@ -211,6 +283,40 @@ let pills = [img`
     . . . . f . . . . . f 7 . 7 . . 
     . . . . . f f f f f 7 . . . 7 . 
     . . . . . . . . . 7 . . . . . 7 
+    . . . . . . . . . . . . . . . . 
+    `, img`
+    . . . . f f f f f f f f . . . . 
+    . . . . f 5 5 5 5 5 5 f . . . . 
+    . . . f f 5 5 5 5 5 5 f . . . . 
+    . . . f 5 5 5 5 5 5 f . . . . . 
+    . . . f 5 5 5 5 5 f . . . . . . 
+    . . f f 5 5 5 5 f f f f f f f . 
+    . . f 5 5 5 5 5 5 5 5 5 5 5 f . 
+    . . f 5 5 5 5 5 5 5 5 5 5 f . . 
+    . . . f f f f f f 5 5 f f . . . 
+    . . . . . . f f 5 5 f f . . . . 
+    . . . . . f f 5 5 f f . . . . . 
+    . . . . f f 5 5 f f . . . . . . 
+    . . . . f 5 5 f f . . . . . . . 
+    . . . f f 5 f f . . . . . . . . 
+    . . . f 5 f f . . . . . . . . . 
+    . . . f f f . . . . . . . . . . 
+    `, img`
+    . . . . . . . . . . . . . . . . 
+    . f f . . . f f f . . . . . . . 
+    . f . f . f 8 8 8 8 . . . . . . 
+    . f . . f f 8 8 8 8 8 . . . . . 
+    . f . . f f . . . f 8 8 . . . . 
+    . f . f 8 f . . . f . 8 . . . . 
+    . f f 8 . . f f f 8 8 8 8 8 . . 
+    . . . . . . . . . . 8 8 8 . . . 
+    . . . 8 . . . . . . . 8 . . . . 
+    . . 8 8 8 . . . . . . . . . . . 
+    . 8 f 8 8 8 f . f f . f f f f f 
+    . . f f . . f f . . f 8 . f . . 
+    . . f 8 f . f f . 8 f . . f . . 
+    . . f . 8 f f f 8 8 f . . f . . 
+    . . f . . 8 f 8 f f . . . f . . 
     . . . . . . . . . . . . . . . . 
     `]
 controller.moveSprite(jogador, 200, 200)
@@ -238,7 +344,7 @@ let endgame = sprites.create(img`
     ....................
     `, SpriteKind.GameInteractions)
 endgame.setPosition(40 * tileSize - 32, 40 * tileSize - 32)
-let stalkerEnemy = sprites.create(img`
+stalkerEnemy = sprites.create(img`
     ........................
     ........................
     ........................
@@ -293,51 +399,6 @@ function init(playerX?:number, playerY?:number,
         info.startCountdown(info.countdown());
     }
 }
-
-
-sprites.onOverlap(SpriteKind.Player, SpriteKind.GameInteractions, function (sprite, otherSprite) {
-    challenges(sprite, otherSprite)
-})
-// Quiz dos questionadores
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
-    let remainingTime = info.countdown();
-    info.stopCountdown();
-    let perguntas: Database.Pergunta[];
-    let rand: number;
-
-    let lastX = jogador.x;
-    let lastY = jogador.y;
-
-    controller.moveSprite(sprite, 0, 0);
-    sprite.setVelocity(0, 0);
-
-
-    if (otherSprite === stalkerEnemy) {
-        perguntas = Database.perguntasStalker;
-        rand = Math.floor(Math.random() * perguntas.length);
-        story.spriteSayText(otherSprite, perguntas[rand].quiz);
-        let alternatives = perguntas[rand].alternativas;
-        story.showPlayerChoices(alternatives[0], alternatives[1], alternatives[2]);
-        let resposta = story.getLastAnswer();
-        if (resposta === perguntas[rand].alternativas[perguntas[rand].resposta]) {
-            story.spriteSayText(otherSprite, "Droga, você colou, certeza...");
-
-            // 2. DESBLOQUEAR JOGADOR (caso ele acerte, ele já pode andar)
-            controller.moveSprite(jogador, 200, 200); // Ajuste 100 para a velocidade do seu jogo
-
-            otherSprite.setPosition(-20, -20);
-            pause(5000);
-            otherSprite.setPosition(lastX, lastY);
-        } else {
-            story.spriteSayText(otherSprite, "HAHAHA, você errou! Melhor voltar para o início do labirinto!");
-            
-            controller.moveSprite(jogador, 200, 200);
-            init(32, 32, 2, 2);
-        }
-        info.startCountdown(remainingTime);
-    }
-})
-
 const challenges: any = (playerSprite: Sprite, gameInteraction: Sprite) => {
     //console.log('Encostou no inimigo')
     if (endgame === gameInteraction) {
@@ -348,6 +409,8 @@ const challenges: any = (playerSprite: Sprite, gameInteraction: Sprite) => {
 
     //else if (enemySprite === endgame) game.gameOver(true);
 }
+initPills()
+init(undefined, undefined, undefined, undefined);
 game.onUpdate(function () {
     // Atualiza direção
     if (Math.abs(jogador.vx) > Math.abs(jogador.vy)) {
@@ -407,7 +470,3 @@ game.onUpdateInterval(150, function () {
             break
     }
 })
-
-init(undefined, undefined, undefined, undefined);
-
-
