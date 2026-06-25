@@ -9,6 +9,7 @@
         "arcade-story": "github:microsoft/arcade-storytelling#v1.0.3"
     },
     "files": [
+        "database.ts",
         "main.blocks",
         "main.ts",
         "README.md",

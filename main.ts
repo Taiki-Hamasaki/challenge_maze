@@ -5,12 +5,6 @@ info.onCountdownEnd(function () {
     game.setGameOverMessage(false, "Seu tempo acabou...\nDerrota")
     game.gameOver(false)
 })
-sprites.onOverlap(SpriteKind.Player, SpriteKind.GameInteractions, function (sprite, otherSprite) {
-    challenges(sprite, otherSprite)
-})
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
-	
-})
 let frame = false
 // 0=baixo, 1=cima, 2=direita, 3=esquerda
 let direcao = 0
@@ -274,7 +268,7 @@ stalkerEnemy.setPosition(-20, -20)
 tiles.setCurrentTilemap(tilemap`level0`)
 function init(playerX?:number, playerY?:number,
     stalkerEnemyX?: number, stalkerEnemyY?:number) {
-    if (playerX === null || playerY === null || playerX === undefined || playerY === undefined) {
+    if (playerX === undefined || playerY === undefined || stalkerEnemyX === undefined || stalkerEnemyY === undefined) {
         jogador.setPosition(32, 32);
 
         pause(5000)
@@ -282,16 +276,68 @@ function init(playerX?:number, playerY?:number,
 
         if (!stalkingLoop) {
             game.onUpdateInterval(500, () => {
-                let caminho = scene.aStar(tiles.locationOfSprite(stalkerEnemy), tiles.locationOfSprite(jogador))
-                scene.followPath(stalkerEnemy, caminho, 100)
+                let caminho = scene.aStar(tiles.locationOfSprite(stalkerEnemy), tiles.locationOfSprite(jogador));
+                scene.followPath(stalkerEnemy, 
+                    caminho === undefined ? [] : caminho, 100)
             });
             stalkingLoop = true;
         }
 
         info.startCountdown(300);
+    } else {
+        jogador.setPosition(playerX, playerY);
+        stalkerEnemy.setPosition(-20, -20);
+        pause(5000)
+        tiles.placeOnTile(stalkerEnemy, tiles.getTileLocation
+            (stalkerEnemyX === undefined ? 2 : stalkerEnemyX, stalkerEnemyY === undefined ? 2 : stalkerEnemyY));
+        info.startCountdown(info.countdown());
     }
 }
-init(null, null);
+
+
+sprites.onOverlap(SpriteKind.Player, SpriteKind.GameInteractions, function (sprite, otherSprite) {
+    challenges(sprite, otherSprite)
+})
+// Quiz dos questionadores
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
+    let remainingTime = info.countdown();
+    info.stopCountdown();
+    let perguntas: Database.Pergunta[];
+    let rand: number;
+
+    let lastX = jogador.x;
+    let lastY = jogador.y;
+
+    controller.moveSprite(sprite, 0, 0);
+    sprite.setVelocity(0, 0);
+
+
+    if (otherSprite === stalkerEnemy) {
+        perguntas = Database.perguntasStalker;
+        rand = Math.floor(Math.random() * perguntas.length);
+        story.spriteSayText(otherSprite, perguntas[rand].quiz);
+        let alternatives = perguntas[rand].alternativas;
+        story.showPlayerChoices(alternatives[0], alternatives[1], alternatives[2]);
+        let resposta = story.getLastAnswer();
+        if (resposta === perguntas[rand].alternativas[perguntas[rand].resposta]) {
+            story.spriteSayText(otherSprite, "Droga, você colou, certeza...");
+
+            // 2. DESBLOQUEAR JOGADOR (caso ele acerte, ele já pode andar)
+            controller.moveSprite(jogador, 200, 200); // Ajuste 100 para a velocidade do seu jogo
+
+            otherSprite.setPosition(-20, -20);
+            pause(5000);
+            otherSprite.setPosition(lastX, lastY);
+        } else {
+            story.spriteSayText(otherSprite, "HAHAHA, você errou! Melhor voltar para o início do labirinto!");
+            
+            controller.moveSprite(jogador, 200, 200);
+            init(32, 32, 2, 2);
+        }
+        info.startCountdown(remainingTime);
+    }
+})
+
 const challenges: any = (playerSprite: Sprite, gameInteraction: Sprite) => {
     //console.log('Encostou no inimigo')
     if (endgame === gameInteraction) {
@@ -361,3 +407,7 @@ game.onUpdateInterval(150, function () {
             break
     }
 })
+
+init(undefined, undefined, undefined, undefined);
+
+
