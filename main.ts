@@ -2,49 +2,100 @@ namespace SpriteKind {
     export const GameInteractions = SpriteKind.create()
     export const PowerUps = SpriteKind.create()
 }
+
+game.splash('Bem vindo aos labirintos dos desafios', 'Você tem 2min para sair daqui,\ntem uns cara falando de programação aí no meio, cuidado...')
+
 sprites.onOverlap(SpriteKind.Player, SpriteKind.PowerUps, function (sprite, otherSprite) {
     if (otherSprite.image == pills[0]) {
-        time = info.countdown()
-        info.startCountdown(time + 10)
+        sprites.destroy(otherSprite, effects.spray)
+        info.changeCountdownBy(10)
     } else if (otherSprite.image == pills[1]) {
-        sprite.setVelocity(300, 300)
-        pause(5000)
-        sprite.setVelocity(200, 200)
+        sprites.destroy(otherSprite, effects.spray)
+        sprite.setVelocity(400, 400)
+        pause(8000)
     } else if (otherSprite.image == pills[2]) {
+        sprites.destroy(otherSprite, effects.spray)
         sprite.setImage(sprite.image.rotated(180))
         controller.moveSprite(sprite, -200, -200)
-        pause(10000)
-        controller.moveSprite(sprite, 200, 200)
+        pause(30000)
     }
-    sprites.destroy(otherSprite, effects.spray)
+    controller.moveSprite(sprite, 200, 200)
 })
-// tiles.placeOnTile(powerUp, )
-function initPills () {
-    x = [
-    1,
-    8,
-    11,
-    5,
-    15,
-    15,
-    24,
-    28,
-    5
-    ]
-    y = [
-    17,
-    24,
-    1,
-    9,
-    1,
-    34,
-    1,
-    24,
-    33
-    ]
+let enemy2: any, enemy3: any;
+enemy2 = sprites.create(img`
+    ..............aa...............
+    ............aaaaaa.............
+    ..........aaaaaaaaaa...........
+    ........aaaaaaaaaaaaaa.........
+    ......baaaaaaaaaaaaaaaab.......
+    ....daaaaaaaab..baaaaaaaad.....
+    ...aaaaaaa..........aaaaaaad...
+    .aaaaaaab............daaaaaaa..
+    aaaaaaa................aaaaa88.
+    aaaaaad................daa8888.
+    aaaaaa..................888888.
+    aaaa........aaaaaa.....8888888.
+    aaaa.......aaaaaaaa..888888888.
+    aaaa......aaaaaaaaa88888888888.
+    aaaa......aaaaaaa8888888888888.
+    aaaa......aaaaa888888888888888.
+    aaaa......aaaa8888888888888888.
+    aaaa......aa888888888888888888.
+    aaaad.....88888888888888888888.
+    aaaaa......88888888..888888888.
+    aaaaa.......888888.....8888888.
+    aaaaa8..................888888.
+    aaa888d................d888888.
+    a888888d...............8888888.
+    .8888888b............b8888888..
+    ...8888888..........8888888....
+    .....88888888bddb88888888d.....
+    ......b8888888888888888b.......
+    ........88888888888888.........
+    ..........8888888888...........
+    ............888888.............
+    ..............88...............
+`, SpriteKind.Enemy)
+enemy3 = sprites.create(img`
+    ................................
+    .................d..............
+    ................................
+    .................23.............
+    ................22..............
+    ...............222..............
+    .............2222....42.........
+    ...........32222..222...........
+    ..........22223.222d............
+    .........2222...22..............
+    .........222...222..............
+    .........222...222..............
+    ..........22...d222.............
+    ...........22...d22.............
+    ............2....22.............
+    .........d.......24......d......
+    ...6888...............d..688....
+    ...888888888888888888.....88....
+    .......b666666............88....
+    .......8d................888....
+    .......88888888888888...889.....
+    ..........666666.......6........
+    .......688.....d888.............
+    ..8888.6888888888888............
+    8888............................
+    68888..................9886.....
+    ..6888888888888888888888d....8..
+    .......d9888888886d........88...
+    ......8...............98888.....
+    ...........688888888869.........
+    ................................
+    ................................
+`, SpriteKind.Enemy)
+function initInteractions() {
+    x = [1, 8, 11, 5, 15, 15, 24, 28, 5]
+    y = [17, 24, 1, 9, 1, 34, 1, 24, 33]
     for (let i = 0; i <= 8; i++) {
-        let powerUp : any;
-if (i < 3) {
+        let powerUp: any;
+        if (i < 3) {
             powerUp = sprites.create(pills[0], SpriteKind.PowerUps)
         } else if (i >= 3 && i <= 5) {
             powerUp = sprites.create(pills[1], SpriteKind.PowerUps)
@@ -53,30 +104,35 @@ if (i < 3) {
         }
         tiles.placeOnTile(powerUp, tiles.getTileLocation(x[i], y[i]))
     }
+    tiles.placeOnTile(enemy2, tiles.getTileLocation(12, 24))
+    tiles.placeOnTile(enemy3, tiles.getTileLocation(33, 14))
+
 }
 info.onCountdownEnd(function () {
     game.setGameOverMessage(false, "Seu tempo acabou...\nDerrota")
     game.gameOver(false)
 })
 sprites.onOverlap(SpriteKind.Player, SpriteKind.GameInteractions, function (sprite, otherSprite) {
-    challenges(sprite, otherSprite)
+    if (endgame === otherSprite) {
+        game.setGameOverMessage(true, "Parabéns, você saiu do labirinto!");
+        game.gameOver(true);
+    }
 })
 // Quiz dos questionadores
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
-    remainingTime = info.countdown()
-    info.stopCountdown()
     let perguntas: Database.Pergunta[];
-let rand: number;
-lastX = jogador.x
+    let rand: number;
+    lastX = jogador.x
     lastY = jogador.y
     controller.moveSprite(sprite, 0, 0)
-    sprite.setVelocity(0, 0)
     if (otherSprite == stalkerEnemy) {
+        remainingTime = info.countdown()
+        info.stopCountdown()
         perguntas = Database.perguntasStalker;
-rand = Math.floor(Math.random() * perguntas.length)
+        rand = Math.floor(Math.random() * perguntas.length)
         story.spriteSayText(otherSprite, perguntas[rand].quiz)
         let alternatives = perguntas[rand].alternativas;
-story.showPlayerChoices(alternatives[0], alternatives[1], alternatives[2])
+        story.showPlayerChoices(alternatives[0], alternatives[1], alternatives[2])
         resposta = story.getLastAnswer()
         if (resposta == perguntas[rand].alternativas[perguntas[rand].resposta]) {
             story.spriteSayText(otherSprite, "Droga, você colou, certeza...")
@@ -90,6 +146,34 @@ story.showPlayerChoices(alternatives[0], alternatives[1], alternatives[2])
             init(32, 32, 2, 2);
         }
         info.startCountdown(remainingTime)
+    } else {
+        stalkingLoop = false;
+        stalkerEnemy.vx = 0
+        stalkerEnemy.vy = 0
+        
+        if (otherSprite == enemy2) {
+            perguntas = Database.perguntasC;
+            rand = Math.floor(Math.random() * perguntas.length)
+        } else if (otherSprite == enemy3) {
+            perguntas = Database.perguntasPOO;
+            rand = Math.floor(Math.random() * perguntas.length)
+        }
+
+        story.spriteSayText(otherSprite, perguntas[rand].quiz)
+        let alternatives = perguntas[rand].alternativas;
+        story.showPlayerChoices(alternatives[0], alternatives[1], alternatives[2])
+        resposta = story.getLastAnswer()
+
+        if (resposta == perguntas[rand].alternativas[perguntas[rand].resposta]) {
+            story.spriteSayText(otherSprite, "Parabéns, entrada liberada!")
+        } else {
+            story.spriteSayText(otherSprite, "Que pena, você errou...\nBoa sorte pra sair daqui com menos tempo")
+            info.changeCountdownBy(-40)
+        }
+        controller.moveSprite(jogador, 200, 200)
+        sprites.destroy(otherSprite)
+
+        stalkingLoop = true;
     }
 })
 let lastY = 0
@@ -99,70 +183,19 @@ let y: number[] = []
 let x: number[] = []
 let time = 0
 let pills: Image[] = []
-let enemy2 = sprites.create(img`
-    ........................
-    ........................
-    ........................
-    ........................
-    ..........ffff..........
-    ........ff1111ff........
-    .......fb111111bf.......
-    .......f11111111f.......
-    ....8.fd11111111df......
-    ...8.8fd18811188df......
-    ...8..8d8d1818dd8f......
-    ......f88bf888fd88......
-    ......fc8cf818fd8f......
-    .......fb8811188f.......
-    ......fffcdb1bdffff.....
-    ....fc111cbfbfc111cf....
-    ....f1b1b1ffff1b1b1f....
-    ....fbfbffffffbfbfbf....
-    .........ffffff.........
-    ...........fff..........
-    ........................
-    ........................
-    ........................
-    ........................
-    `, SpriteKind.Player)
-let enemy3 = sprites.create(img`
-    ......2....2............
-    ......2....22...........
-    ......22....22..2.......
-    .....222....22..22......
-    .....222...222..22......
-    .....222...222..22......
-    .....22....22...22......
-    ......2.........2.....88
-    ....888888888........888
-    ....888888888888888.8888
-    ........f88888f8....8.88
-    ....888.ff...ff..88...88
-    ....8888ff888ff8888...88
-    ....8888f88888f888...888
-    .............8888...888.
-    ....88..............88..
-    ....8ff888888888.ff.8...
-    ....888fffffffffff8.....
-    .....8888888888888......
-    ......88888888888.......
-    .fffffffffffffffffffff..
-    ..6666666666666666666...
-    ........................
-    ........................
-    `, SpriteKind.Player)
 let frame = false
 // 0=baixo, 1=cima, 2=direita, 3=esquerda
 let direcao = 0
-let stalkingLoop = false
+let stalkingLoop = true
 let jogador: Sprite = null
 let stalkerEnemy: Sprite = null
 let resposta = ""
 let powerUp2 = null
+
 // 0,3 - parado
 // 1,2,4,5 - andando
 let playerSprites = [
-img`
+    img`
     . . . . f f f f . . . . . 
     . . f f f f f f f f . . . 
     . f f f f f f c f f f . . 
@@ -180,7 +213,7 @@ img`
     . . . f f f f f f . . . . 
     . . . f f . . f f . . . . 
     `,
-img`
+    img`
     . . . . . . . . . . . . . 
     . . . . . f f f f . . . . 
     . . . f f f f f f f f . . 
@@ -198,7 +231,7 @@ img`
     . . . f f f f f f f . . . 
     . . . f f f . . . . . . . 
     `,
-img`
+    img`
     . . . . . . . . . . . . . 
     . . . . f f f f . . . . . 
     . . f f f f f f f f . . . 
@@ -216,7 +249,7 @@ img`
     . . . f f f f f f f . . . 
     . . . . . . . f f f . . . 
     `,
-img`
+    img`
     . . . . f f f f . . . . . 
     . . f f c c c c f f . . . 
     . f f c c c c c c f f . . 
@@ -234,7 +267,7 @@ img`
     . . . f f f f f f . . . . 
     . . . f f . . f f . . . . 
     `,
-img`
+    img`
     . . . . . . . . . . . . . 
     . . . . . f f f f . . . . 
     . . . f f c c c c f f . . 
@@ -252,7 +285,7 @@ img`
     . . e f f f f f f f e e . 
     . . . f f f . . . . . . . 
     `,
-img`
+    img`
     . . . . . . . . . . . . . 
     . . . . . f f f f . . . . 
     . . . f f c c c c f f . . 
@@ -270,7 +303,7 @@ img`
     . . e e f f f f f f f e . 
     . . . . . . . . f f f . . 
     `,
-img`
+    img`
     . . . . . f f f f f . . . 
     . . . f f f f f f f f f . 
     . . f f f c f f f f f f . 
@@ -288,7 +321,7 @@ img`
     . . . . f f f f f f . . . 
     . . . . . . f f f . . . . 
     `,
-img`
+    img`
     . . . . . . . . . . . . . 
     . . . . f f f f f f . . . 
     . . . f f f f f f f f f . 
@@ -306,7 +339,7 @@ img`
     . . f f f f f f f f f f . 
     . . . f f f . . . f f . . 
     `,
-img`
+    img`
     . . . f f f f f . . . . . 
     . f f f f f f f f f . . . 
     . f f f f f f c f f f . . 
@@ -324,7 +357,7 @@ img`
     . . . f f f f f f . . . . 
     . . . . f f f . . . . . . 
     `,
-img`
+    img`
     . . . . . . . . . . . . . 
     . . . f f f f f f . . . . 
     . f f f f f f f f f . . . 
@@ -442,24 +475,22 @@ stalkerEnemy = sprites.create(img`
     `, SpriteKind.Enemy)
 stalkerEnemy.setPosition(-20, -20)
 tiles.setCurrentTilemap(tilemap`level0`)
-function init(playerX?:number, playerY?:number,
-    stalkerEnemyX?: number, stalkerEnemyY?:number) {
+function init(playerX?: number, playerY?: number,
+    stalkerEnemyX?: number, stalkerEnemyY?: number) {
     if (playerX === undefined || playerY === undefined || stalkerEnemyX === undefined || stalkerEnemyY === undefined) {
         jogador.setPosition(32, 32);
 
         pause(5000)
         tiles.placeOnTile(stalkerEnemy, tiles.getTileLocation(2, 2));
 
-        if (!stalkingLoop) {
-            game.onUpdateInterval(500, () => {
+        game.onUpdateInterval(1500, () => {
+            if(stalkingLoop) {
                 let caminho = scene.aStar(tiles.locationOfSprite(stalkerEnemy), tiles.locationOfSprite(jogador));
-                scene.followPath(stalkerEnemy, 
+                scene.followPath(stalkerEnemy,
                     caminho === undefined ? [] : caminho, 100)
-            });
-            stalkingLoop = true;
-        }
-
-        info.startCountdown(300);
+            }
+        });
+        info.startCountdown(120);
     } else {
         jogador.setPosition(playerX, playerY);
         stalkerEnemy.setPosition(-20, -20);
@@ -469,18 +500,7 @@ function init(playerX?:number, playerY?:number,
         info.startCountdown(info.countdown());
     }
 }
-const challenges: any = (playerSprite: Sprite, gameInteraction: Sprite) => {
-    //console.log('Encostou no inimigo')
-    if (endgame === gameInteraction) {
-        //sprites.destroyAllSpritesOfKind(SpriteKind.GameInteractions);
-        game.setGameOverMessage(true, "Parabéns, você saiu do labirinto!");
-        game.gameOver(true);
-    }
 
-    //else if (enemySprite === endgame) game.gameOver(true);
-}
-initPills()
-init(undefined, undefined, undefined, undefined);
 game.onUpdate(function () {
     // Atualiza direção
     if (Math.abs(jogador.vx) > Math.abs(jogador.vy)) {
@@ -540,3 +560,5 @@ game.onUpdateInterval(150, function () {
             break
     }
 })
+initInteractions()
+init(undefined, undefined, undefined, undefined);
