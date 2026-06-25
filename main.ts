@@ -1,6 +1,14 @@
 namespace SpriteKind {
     export const GameInteractions = SpriteKind.create()
 }
+info.onCountdownEnd(function () {
+    game.setGameOverMessage(false, "Seu tempo acabou...\nDerrota")
+    game.gameOver(false)
+})
+sprites.onOverlap(SpriteKind.Player, SpriteKind.GameInteractions, function (sprite, otherSprite) {
+    challenges(sprite, otherSprite)
+})
+let stalkingLoop = false
 let tileSize = 16
 let jogador = sprites.create(img`
     e e e . . . . e e e . . . . 
@@ -20,6 +28,7 @@ let jogador = sprites.create(img`
     `, SpriteKind.Player)
 controller.moveSprite(jogador, 200, 200)
 scene.cameraFollowSprite(jogador)
+endgame.setPosition(40 * tileSize - 32, 40 * tileSize - 32)
 
 let endgame = sprites.create(img`
     ....................
@@ -43,7 +52,7 @@ let endgame = sprites.create(img`
     ....................
     ....................
     `, SpriteKind.GameInteractions)
-let enemy1 = sprites.create(img`
+let stalkerEnemy = sprites.create(img`
     ..ff.......cc...
     ..fbff...fcbc...
     ..fbbcfffbbbc...
@@ -77,23 +86,27 @@ let enemy1 = sprites.create(img`
     ......fbbf......
     .......fff......
     `, SpriteKind.Enemy)
-sprites.onOverlap(SpriteKind.Player, SpriteKind.GameInteractions, function (sprite, otherSprite) {
-    challenges(sprite, otherSprite)
-})
+tiles.setCurrentTilemap(tilemap`level0`)
+function init(playerX?:number, playerY?:number,
+    stalkerEnemyX?: number, stalkerEnemyY?:number) {
+    if (playerX === null || playerY === null || playerX === undefined || playerY === undefined) {
+        jogador.setPosition(32, 32);
 
-function init(xPosition?:number, yPosition?:number) {
-    tiles.setCurrentTilemap(tilemap`level0`)
-    if(xPosition === null || yPosition === null)
-        jogador.setPosition(32, 32)
-    else jogador.setPosition(xPosition, yPosition)
+        pause(5000)
+        tiles.placeOnTile(stalkerEnemy, tiles.getTileLocation(2, 2));
+
+        if (!stalkingLoop) {
+            game.onUpdateInterval(500, () => {
+                let caminho = scene.aStar(tiles.locationOfSprite(stalkerEnemy), tiles.locationOfSprite(jogador))
+                scene.followPath(stalkerEnemy, caminho, 100)
+            });
+            stalkingLoop = true;
+        }
+
+        info.startCountdown(300);
+    }
 }
-
-
 init(null, null);
-endgame.setPosition(40 * tileSize - 32, 40 * tileSize - 32)
-
-
-
 const challenges: any = (playerSprite: Sprite, gameInteraction: Sprite) => {
     console.log('Encostou no inimigo')
     if (endgame === gameInteraction) {
