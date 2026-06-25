@@ -3,7 +3,7 @@ namespace SpriteKind {
     export const PowerUps = SpriteKind.create()
 }
 
-game.splash('Bem vindo aos labirintos dos desafios', 'Você tem 2min para sair daqui,\ntem uns cara falando de programação aí no meio, cuidado...')
+game.splash('Bem vindo aos labirintos dos desafios', 'Você tem 3min para sair daqui,\ntem uns cara falando de programação aí no meio, cuidado...')
 
 sprites.onOverlap(SpriteKind.Player, SpriteKind.PowerUps, function (sprite, otherSprite) {
     if (otherSprite.image == pills[0]) {
@@ -168,7 +168,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSp
             story.spriteSayText(otherSprite, "Parabéns, entrada liberada!")
         } else {
             story.spriteSayText(otherSprite, "Que pena, você errou...\nBoa sorte pra sair daqui com menos tempo")
-            info.changeCountdownBy(-40)
+            info.changeCountdownBy(-30)
         }
         controller.moveSprite(jogador, 200, 200)
         sprites.destroy(otherSprite)
@@ -190,7 +190,6 @@ let stalkingLoop = true
 let jogador: Sprite = null
 let stalkerEnemy: Sprite = null
 let resposta = ""
-let powerUp2 = null
 
 // 0,3 - parado
 // 1,2,4,5 - andando
@@ -480,7 +479,7 @@ function init(playerX?: number, playerY?: number,
     if (playerX === undefined || playerY === undefined || stalkerEnemyX === undefined || stalkerEnemyY === undefined) {
         jogador.setPosition(32, 32);
 
-        pause(5000)
+        pause(2000)
         tiles.placeOnTile(stalkerEnemy, tiles.getTileLocation(2, 2));
 
         game.onUpdateInterval(1500, () => {
@@ -490,11 +489,11 @@ function init(playerX?: number, playerY?: number,
                     caminho === undefined ? [] : caminho, 100)
             }
         });
-        info.startCountdown(120);
+        info.startCountdown(180);
     } else {
         jogador.setPosition(playerX, playerY);
         stalkerEnemy.setPosition(-20, -20);
-        pause(5000)
+        pause(2000)
         tiles.placeOnTile(stalkerEnemy, tiles.getTileLocation
             (stalkerEnemyX === undefined ? 2 : stalkerEnemyX, stalkerEnemyY === undefined ? 2 : stalkerEnemyY));
         info.startCountdown(info.countdown());
